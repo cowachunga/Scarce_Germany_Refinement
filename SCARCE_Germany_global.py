@@ -13,7 +13,7 @@ import copy
 
 import matplotlib.pyplot as plt
 
-# os.chdir('Desktop/Work/SCARCE/Python')
+# os.chdir('Desktop/Work/Scarce_Germany_Refinement/Python')
 
 # %%Import data
 
@@ -1686,41 +1686,41 @@ environmental_standard_final_total['Scaled total'] = (
 
 # %%Export the results
 
-outdir1 = '/home/jessica/PycharmProjects/SCARCE/Results/Supply risk'
+outdir1 = '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Supply risk'
 if not os.path.exists(outdir1):
     os.mkdir(outdir1)
 
-outdir3 = '/home/jessica/PycharmProjects/SCARCE/Results/Social standards'
+outdir3 = '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Social standards'
 if not os.path.exists(outdir3):
     os.mkdir(outdir3)
 
-outdir4 = '/home/jessica/PycharmProjects/SCARCE/Results/Environmental standards'
+outdir4 = '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Environmental standards'
 if not os.path.exists(outdir4):
     os.mkdir(outdir4)
 
 supply_risk_scaled_final.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Supply risk/Supply risk scaled_global.csv', index=True
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Supply risk/Supply risk scaled_global.csv', index=True
 )
 social_standard_final.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Social standards/Compliance with social standards_global.csv',
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Social standards/Compliance with social standards_global.csv',
     index=True
 )
 environmental_standard_final.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Environmental standards/Compliance with environmental standards_global.csv',
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Environmental standards/Compliance with environmental standards_global.csv',
     index=True
 )
 
 # %%Export the results with total column
 
 supply_risk_scaled_final_total.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Supply risk/Supply risk total_global.csv', index=True
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Supply risk/Supply risk total_global.csv', index=True
 )
 social_standard_final_total.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Social standards/Compliance with social standards total_global.csv',
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Social standards/Compliance with social standards total_global.csv',
     index=True
 )
 environmental_standard_final_total.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Environmental standards/Compliance with environmental standards total_global.csv',
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Environmental standards/Compliance with environmental standards total_global.csv',
     index=True
 )
 
@@ -1752,7 +1752,7 @@ supply_risk.set_xticklabels(supply_risk.get_xticklabels(), rotation=45, ha=ha)
 supply_risk.legend(fontsize=12)
 
 # Save the graph
-supply_risk.get_figure().savefig('/home/jessica/PycharmProjects/SCARCE/Results/Sypply risk_global.png', dpi=300)
+supply_risk.get_figure().savefig('/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Sypply risk_global.png', dpi=300)
 
 # Compliance with social standards plot
 # Sort the compliance with social standards dataframe
@@ -1778,7 +1778,7 @@ social_standard.set_xticklabels(social_standard.get_xticklabels(), rotation=45, 
 social_standard.legend(fontsize=12)
 
 # Save the graph
-social_standard.get_figure().savefig('/home/jessica/PycharmProjects/SCARCE/Results/Social standard_global.png', dpi=300)
+social_standard.get_figure().savefig('/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Social standard_global.png', dpi=300)
 
 # Compliance with environmental standards plot
 # Sort the compliance with environmental standards dataframe
@@ -1806,12 +1806,12 @@ environmental_standard.legend(fontsize=12)
 
 # Save the graph
 environmental_standard.get_figure().savefig(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Environmental standard_global.png', dpi=300)
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Environmental standard_global.png', dpi=300)
 
 ############## PLOT THE CRITICALITY MATRIX ################
 
 results = pd.read_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Supporting files/Result_total_global.csv'
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Supporting files/Result_total_global.csv'
 )
 
 

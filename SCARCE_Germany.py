@@ -2054,48 +2054,48 @@ environmental_standard_final_total['Scaled total'] = (
 
 # %%Export the results
 
-outdir1 = '/home/jessica/PycharmProjects/SCARCE/Results/Supply risk'
+outdir1 = '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Supply risk'
 if not os.path.exists(outdir1):
     os.mkdir(outdir1)
 
-outdir2 = '/home/jessica/PycharmProjects/SCARCE/Results/Vulnerability'
+outdir2 = '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Vulnerability'
 if not os.path.exists(outdir2):
     os.mkdir(outdir2)
 
-outdir3 = '/home/jessica/PycharmProjects/SCARCE/Results/Social standards'
+outdir3 = '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Social standards'
 if not os.path.exists(outdir3):
     os.mkdir(outdir3)
 
-outdir4 = '/home/jessica/PycharmProjects/SCARCE/Results/Environmental standards'
+outdir4 = '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Environmental standards'
 if not os.path.exists(outdir4):
     os.mkdir(outdir4)
 
 supply_risk_scaled_final.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Supply risk/Supply risk scaled.csv', index=True
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Supply risk/Supply risk scaled.csv', index=True
 )
 vulnerability_final.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Vulnerability/Vulnerability.csv', index=True
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Vulnerability/Vulnerability.csv', index=True
 )
 social_standard_final.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Social standards/Compliance with social standards.csv', index=True
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Social standards/Compliance with social standards.csv', index=True
 )
 environmental_standard_final.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Environmental standards/Compliance with environmental standards.csv', index=True
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Environmental standards/Compliance with environmental standards.csv', index=True
 )
 
 # %%Export the results with total column
 
 supply_risk_scaled_final_total.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Supply risk/Supply risk total.csv', index=True
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Supply risk/Supply risk total.csv', index=True
 )
 vulnerability_final_total.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Vulnerability/Vulnerability total.csv', index=True
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Vulnerability/Vulnerability total.csv', index=True
 )
 social_standard_final_total.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Social standards/Compliance with social standards total.csv', index=True
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Social standards/Compliance with social standards total.csv', index=True
 )
 environmental_standard_final_total.to_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Results/Environmental standards/Compliance with environmental standards total.csv',
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Environmental standards/Compliance with environmental standards total.csv',
     index=True
 )
 
@@ -2127,7 +2127,7 @@ supply_risk.set_xticklabels(supply_risk.get_xticklabels(), rotation=45, ha=ha)
 supply_risk.legend(fontsize=12)
 
 # Save the graph
-supply_risk.get_figure().savefig('/home/jessica/PycharmProjects/SCARCE/Results/Supply risk.png', dpi=300, bbox_inches='tight',
+supply_risk.get_figure().savefig('/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Supply risk.png', dpi=300, bbox_inches='tight',
                                  pad_inches=0.0)
 
 # Vulnerability plot
@@ -2154,7 +2154,7 @@ vulnerability.set_xticklabels(vulnerability.get_xticklabels(), rotation=45, ha=h
 vulnerability.legend(fontsize=12)
 
 # Save the graph
-vulnerability.get_figure().savefig('/home/jessica/PycharmProjects/SCARCE/Results/Vulnerability.png', dpi=300, bbox_inches='tight',
+vulnerability.get_figure().savefig('/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Vulnerability.png', dpi=300, bbox_inches='tight',
                                    pad_inches=0.0)
 
 # Compliance with social standards plot
@@ -2181,7 +2181,7 @@ social_standard.set_xticklabels(social_standard.get_xticklabels(), rotation=45, 
 social_standard.legend(fontsize=12)
 
 # Save the graph
-social_standard.get_figure().savefig('/home/jessica/PycharmProjects/SCARCE/Results/Social standard.png', dpi=300,
+social_standard.get_figure().savefig('/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Social standard.png', dpi=300,
                                      bbox_inches='tight', pad_inches=0.0)
 
 # Compliance with environmental standards plot
@@ -2209,13 +2209,13 @@ environmental_standard.set_xticklabels(environmental_standard.get_xticklabels(),
 environmental_standard.legend(fontsize=12)
 
 # Save the graph
-environmental_standard.get_figure().savefig('/home/jessica/PycharmProjects/SCARCE/Results/Environmental standard.png', dpi=300,
+environmental_standard.get_figure().savefig('/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Environmental standard.png', dpi=300,
                                             bbox_inches='tight', pad_inches=0.0)
 
 ############## PLOT THE CRITICALITY MATRIX ################
 
 results = pd.read_csv(
-    '/home/jessica/PycharmProjects/SCARCE/Supporting files/Result_total.csv'
+    '/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Supporting files/Result_total.csv'
 )
 
 
@@ -2452,17 +2452,17 @@ ax.set_xlim(-0.05, 1.05)
 ax.set_ylim(-0.05, 1.05)
 
 # Save
-fig.savefig('/home/jessica/PycharmProjects/SCARCE/Results/Matrix.png', dpi=450, bbox_inches='tight', pad_inches=0.0)
+fig.savefig('/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Matrix.png', dpi=450, bbox_inches='tight', pad_inches=0.0)
 # fig.savefig("test.pdf")
 # fig.savefig("test.svg")
 plt.show()
 
 # Same extra code
-# supply_risk_scaled_final_total_global = pd.read_csv('/home/jessica/PycharmProjects/SCARCE/Results/Supply risk/Supply risk total_global.csv')
+# supply_risk_scaled_final_total_global = pd.read_csv('/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Supply risk/Supply risk total_global.csv')
 # supply_risk_scaled_final_total_global.rename(columns={'Unnamed: 0':'Commodity'},inplace=True)
 # supply_risk_scaled_final_total_global.set_index('Commodity',inplace = True)
-# social_standard_final_total_global = pd.read_csv('/home/jessica/PycharmProjects/SCARCE/Results/Social standards/Compliance with social standards total_global.csv')
-# environmental_standard_final_total_global = pd.read_csv('/home/jessica/PycharmProjects/SCARCE/Results/Environmental standards/Compliance with environmental standards total_global.csv')
+# social_standard_final_total_global = pd.read_csv('/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Social standards/Compliance with social standards total_global.csv')
+# environmental_standard_final_total_global = pd.read_csv('/home/jessica/PycharmProjects/Scarce_Germany_Refinement/Results/Environmental standards/Compliance with environmental standards total_global.csv')
 # supply_risk_scaled_final_total.index.name = 'Commodity'
 
 # supply_risk_scaled_final_total.drop(supply_risk_scaled_final_total.columns.difference(
