@@ -1,0 +1,36 @@
+﻿Material,Supply Risk,Vulnerability,Social Standards Compliance,Environmental Standards Compliance,Hot Spots
+Al,0.080585131,0.396530625,0.148869045,0.146284713,Neither an environmental nor a social hotspot
+Sb,0.331536813,0.333372613,0.536270619,0.169748174,Social
+Bi,0.782087377,0.290686408,0.163576508,0.116860635,Neither an environmental nor a social hotspot
+Cd,0.40026314,0,0.09717775,0.131552229,Neither an environmental nor a social hotspot
+Cr,0.264014093,0.46264398,0.230141475,0.401314178,Neither an environmental nor a social hotspot
+Coal,0.479363914,0.404988189,0.165781448,0.257304101,Neither an environmental nor a social hotspot
+Co,0.839146955,0.561937403,1,0.451594773,Social
+Cu,0.304829759,0.320004691,0.199133561,0.619513209,Neither an environmental nor a social hotspot
+Crude oils,0.658528113,0.347254992,0.174589634,0.714496212,Environmental
+Au,0.24476468,0.007988513,0.437255566,1,Social and Environmental
+Gr,0.497085529,0.533578142,0.210977114,0.140889103,Neither an environmental nor a social hotspot
+In,0.241032114,0.693070152,0.09372931,0.095394523,Neither an environmental nor a social hotspot
+Fe,0.181013153,0.45488022,0.176654569,0.248193911,Neither an environmental nor a social hotspot
+Pb,0.241572167,0.402154851,0.347295116,0.316703756,Neither an environmental nor a social hotspot
+Lignite,0.398858723,0.224330216,0.102648468,0.126533889,Neither an environmental nor a social hotspot
+Li,0.787070702,0.49409335,0,0.799644749,Environmental
+Mg,0.637382191,0.597070941,0.182678257,0.129253789,Neither an environmental nor a social hotspot
+Mn,0.214991979,0.423424727,0.362072327,0.36425176,Neither an environmental nor a social hotspot
+Mo,0.273601027,0.488458495,0.11840813,0.735429687,Environmental
+Natural gas,0.465986358,0.253178106,0.143646498,0.372454668,Neither an environmental nor a social hotspot
+Ni,0,0.458368024,0.104081938,0.703038902,Neither an environmental nor a social hotspot
+Nb,1,0.221880059,0.164514707,0.20947803,Neither an environmental nor a social hotspot
+P,0.498839884,0.883451483,0.158443069,0.743149462,Environmental
+Pt,0.46292324,1,0.298619175,0.341242069,Neither an environmental nor a social hotspot
+Rare earths,0.533520106,0.563333624,0.164723827,0.268292257,Neither an environmental nor a social hotspot
+Se,0.417236542,0.226385768,0.069904609,0,Neither an environmental nor a social hotspot
+Ag,0.418490347,0.424556835,0.211878719,0.383212992,Neither an environmental nor a social hotspot
+Sr,0.341483645,0.284953431,0.148381209,0.264826393,Neither an environmental nor a social hotspot
+Ta,0.583401689,0.568017618,0.459480428,0.115600634,Social
+Ti,0.19297903,0.303890729,0.173249927,0.316112781,Neither an environmental nor a social hotspot
+W,0.395328997,0.160488037,0.555091972,0.135961213,Social
+U,0.36587238,0.208222236,0.110843857,0.017308193,Neither an environmental nor a social hotspot
+V,0.575960175,0.541205009,0.212643501,0.175553003,Neither an environmental nor a social hotspot
+Zn,0.335681043,0.17832913,0.297342258,0.463901636,Neither an environmental nor a social hotspot
+Zr,0.610396422,0.308971942,0.141024349,0.28669051,Neither an environmental nor a social hotspot

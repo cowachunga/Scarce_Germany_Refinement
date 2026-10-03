@@ -20,7 +20,7 @@ They are as follows:
 
 2. Germany_value_added.csv
        Value added of German industry sectors.  Columns:   Industry and Value added
-       Important: The last row must be the total of all sectors.
+       Important: The last row must be the total of all sectors. 'Value Added' sheet of Indicators.xlsx.
 
 3. Germany_economic_importance.csv
        Which industries use each material.  Columns:   Material, Industry, and Share
@@ -44,13 +44,11 @@ REFINE_CODE = False                                                     # False 
                                                                         # True  = add refinements listed in scarce_core.Settings
 SHOW_PLOTS = True                                                       # show the criticality matrix in a window
 
-IMPORTS_FILE = 'Comtrade_Germany_2020.csv'                      # Germany's imports (UN Comtrade)
-VALUE_ADDED_FILE = 'Germany_value_added.csv'                    # Industry, Value added
-ECONOMIC_IMPORTANCE_FILE = 'Germany_economic_importance.csv'    # Material, Industry, Share
+IMPORTS_FILE = 'Comtrade_all_2015.csv'                           # Germany's imports (UN Comtrade)
+#VALUE_ADDED_FILE = 'Germany_value_added.csv'                    # Industry, Value added
+#ECONOMIC_IMPORTANCE_FILE = 'Germany_economic_importance.csv'    # Material, Industry, Share (using built-in file from Japan)
 # ------------------------------------------------------------------------------
 
 if __name__ == '__main__':
     run_assessment(Settings(country='Germany', mode='import', data_dir=DATA_DIR, results_dir=RESULTS_DIR,
-                            imports_file=IMPORTS_FILE, value_added_file=VALUE_ADDED_FILE,
-                            economic_importance_file=ECONOMIC_IMPORTANCE_FILE,
-                            refine_code=REFINE_CODE, show_plots=SHOW_PLOTS))
+                            imports_file=IMPORTS_FILE, refine_code=REFINE_CODE, show_plots=SHOW_PLOTS))

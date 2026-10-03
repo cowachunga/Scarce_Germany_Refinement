@@ -174,17 +174,17 @@ class Settings:
                                                      share (%) of each material's use by industry
                                                      industries must exist in the value-added table.  None = built-in Japan table.
     """
-    country: str = 'Japan'
+    country: str = 'Germany'
     mode: str = 'import'
     data_dir: Path = Path('Supporting files')
     results_dir: Path = Path('Results')
     refine_code: bool = False
     show_plots: bool = True
-    imports_file: str | None = None          # default: Comtrade_all_2020.csv (Japan) / Comtrade_<country>_2020.csv
+    imports_file: str | None = None          # default: Comtrade_all_2020.csv (Japan) / Comtrade_all_<year>.csv
     value_added_file: str | None = None
     economic_importance_file: str | None = None
-    production_file: str = 'Production 2019 2020.xlsx'
-    reserves_file: str = 'Reserves 2020.xlsx'
+    production_file: str = 'Production_All.xlsx'
+    reserves_file: str = 'Reserves.xlsx'
     indicators_file: str = 'Indicators.xlsx'
     matrix_input_file: str | None = None
 
@@ -336,22 +336,31 @@ def load_economic_importance(settings: Settings, sheets: dict[str, pd.DataFrame]
     """Industry value added and the sector shares per material (economic importance).
 
     Japan : 'Value added' sheet of Indicators.xlsx + the built-in sector table.
+    Germany : 'Value added' sheet of Indicators.xlsx + the built-in sector table.
     Other countries: both must be supplied as CSV files (Settings.value_added_file and
     Settings.economic_importance_file)
         value added file            columns  Industry, Value added
         economic importance         columns  Material, Industry, Share  
     """
     d = settings.data_dir
+    
+    # Read indicators file
     if settings.value_added_file:
         value_added = pd.read_csv(_find_file(settings.value_added_file, d)).set_index('Industry')['Value added']
+    elif settings.country == 'Germany':
+        value_added = sheets['Value added'].set_index('Industry')['Value added']
     elif settings.country == 'Japan':
         value_added = sheets['Value added'].set_index('Industry')['Value added']
     else:
         raise ValueError(f"Import mode for {settings.country} needs {settings.country}'s industry data: set "
                          "value_added_file (the 'Value added' sheet in Indicators.xlsx describes Japan).")
+    
+    # Read economic importance file
     if settings.economic_importance_file:
         table = pd.read_csv(_find_file(settings.economic_importance_file, d))
         shares = {m: list(zip(g['Industry'], g['Share'])) for m, g in table.groupby('Material', sort=False)}
+    elif settings.country == 'Germany':
+        shares = JAPAN_ECONOMIC_IMPORTANCE_SECTORS
     elif settings.country == 'Japan':
         shares = JAPAN_ECONOMIC_IMPORTANCE_SECTORS
     else:
