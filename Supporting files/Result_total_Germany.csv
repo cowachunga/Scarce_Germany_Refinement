@@ -1,0 +1,36 @@
+Material,Supply Risk,Vulnerability,Social Standards Compliance,Environmental Standards Compliance,Hot Spots
+Gold,0.157129873214064,0.175288660874896,0.593750908287346,1,Environmental
+Platinum,0.37241132571909,0.855981641293602,0.521943508014429,0.756968154985473,Environmental
+Silver,0.35570379792655,0.477096550612227,0.351326153077897,0.702843456663983,Environmental
+Niobium,0.827314487426741,0.442825685868163,0.23784881478378,0.640488258628184,Environmental
+Natural gas,0.381209521847674,0.433848405252477,0.424338264061833,0.533766654884981,Environmental
+Lithium,0.481015777276646,0.594869365601327,0.090092464440824,0.522961399531218,Abiotic material that has neither an environmental nor a social hotspot
+Crude oils,0.294134200309122,0.70054325075043,0.330984111718421,0.519227247092239,Abiotic material that has neither an environmental nor a social hotspot
+Copper,0.168114917845191,0.588405051256767,0.229193863937557,0.514920602061901,Abiotic material that has neither an environmental nor a social hotspot
+Iron,0.418898918509262,0.443612684889511,0.23884548196924,0.495118584963287,Abiotic material that has neither an environmental nor a social hotspot
+Phosphorus,0.474534359700737,0.825430450173647,0.49215463513114,0.467569550298758,Abiotic material that has neither an environmental nor a social hotspot
+Chromium,0.308696009326872,0.567974403073049,0.687134115056956,0.456925710637654,Social
+Manganese,0.091260695767699,0.527925111323279,0.613162160868049,0.408900619312145,Abiotic material that has neither an environmental nor a social hotspot
+Molybdenum,0.171038906621884,0.489958747542428,0.249848973990772,0.404265462738099,Abiotic material that has neither an environmental nor a social hotspot
+Strontium,0.130045943678844,0.230992502394275,0.461637046256724,0.404227825785636,Abiotic material that has neither an environmental nor a social hotspot
+Zinc,0.112489491142945,0.318973915297933,0.213469506152817,0.354747728430112,Abiotic material that has neither an environmental nor a social hotspot
+Nickel,0,0.437203672360017,0.308722848028346,0.306460364960017,Abiotic material that has neither an environmental nor a social hotspot
+Aluminium,0.130841219931042,0.543345990499769,0.414226175141135,0.294634919973411,Abiotic material that has neither an environmental nor a social hotspot
+Uranium,0.143071889729979,0.459181832168236,0.25698125155848,0.278030983273891,Abiotic material that has neither an environmental nor a social hotspot
+Vanadium,0.368818694268505,0.60474415136815,0.643163351397565,0.275538144141728,Social
+Lignite,0.338386158457976,0,0.232958090527713,0.262506570821681,Abiotic material that has neither an environmental nor a social hotspot
+Lead,0.111441731362571,0.38555756984231,0.308313233357291,0.257517272073797,Abiotic material that has neither an environmental nor a social hotspot
+Cobalt,0.181655536544961,0.710309232105934,0.452203803289255,0.248287657752266,Abiotic material that has neither an environmental nor a social hotspot
+Titanium,0.165756313525014,0.398921026286968,0.198793592838941,0.22380021552259,Abiotic material that has neither an environmental nor a social hotspot
+Coal,0.305292621809756,0.543527640911011,0.349151487875643,0.211865938519157,Abiotic material that has neither an environmental nor a social hotspot
+Tantalum,0.783792469889148,0.58279440262045,0.791302525141392,0.208905444891668,Social
+Graphite,0.38372954640842,0.605970137485393,0.589935838226616,0.20139847027593,Abiotic material that has neither an environmental nor a social hotspot
+Zirconium,0.557511540002682,0.369424113505543,0.488354766075679,0.199966807594611,Abiotic material that has neither an environmental nor a social hotspot
+Magnesium,0.135405136789483,1,0.495139251656065,0.172710644379088,Abiotic material that has neither an environmental nor a social hotspot
+Antimony,0.372209182198547,0.398406208871258,1,0.143085729866212,Social
+Tungsten,0.381598540829524,0.120320373609482,0.946010902448658,0.116812409796866,Social
+Bismuth,0.723904381356837,0.404761581696314,0.617548674117129,0.116546070976781,Abiotic material that has neither an environmental nor a social hotspot
+Rare earths,1,0.532963375417483,0.641966604951578,0.098758661116325,Abiotic material that has neither an environmental nor a social hotspot
+Indium,0.19951567780985,0.710858741262238,0.369550364668594,0.093484247432537,Abiotic material that has neither an environmental nor a social hotspot
+Selenium,0.360527973307174,0.35956686695467,0.029120853017734,0.076307316916363,Abiotic material that has neither an environmental nor a social hotspot
+Cadmium,0.327357839720029,0.497137683895417,0,0,Abiotic material that has neither an environmental nor a social hotspot
