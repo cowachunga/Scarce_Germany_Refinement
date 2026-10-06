@@ -54,20 +54,38 @@ MATERIALS = [
 ]
 
 MINING_CAPACITY = 'Mining capacity'
+#: refine_code only: new Supply Risk category built from the DCC indicator.
+DISASTER_COPING_CAPACITY = 'Disaster coping capacity'   # exact spelling in the 'Categories and targets' sheet
 
-#: The ten supply-risk indicators in methodology order.
-SUPPLY_RISK_INDICATORS = [
-    'Concentration of production',
-    'Concentration of reserves',
-    'Feasibility of exploration projects',
-    'Political stability',
-    MINING_CAPACITY,
-    'Trade barriers',
-    'Demand growth',
-    'Price fluctuation',
-    'Primary material use',
-    'Occurrence of co-production',
-]
+#: Categories where a HIGHER raw value means LESS risk, so distance_to_target inverts them
+#: ((target/value)^2 instead of (value/target)^2) rather than scoring them like the rest.
+#: Only Mining capacity is inverted now: higher DCC means LESS disaster-coping capacity (i.e.
+#: MORE risk), so - unlike Mining capacity - it is scored directly, the same way as every
+#: other category (value/target)^2, not (target/value)^2.
+INVERTED_SUPPLY_RISK_CATEGORIES = {MINING_CAPACITY}
+
+
+def supply_risk_indicators(refine_code: bool = False) -> list:
+    """The Supply Risk categories, in methodology order. refine_code adds Disaster Coping
+    Capacity (indicator DCC) as an 11th category, with no special weight of its own - it is
+    simply one more column, exactly like the original ten (see add_totals)."""
+    base = [
+        'Concentration of production',
+        'Concentration of reserves',
+        'Feasibility of exploration projects',
+        'Political stability',
+        MINING_CAPACITY,
+        'Trade barriers',
+        'Demand growth',
+        'Price fluctuation',
+        'Primary material use',
+        'Occurrence of co-production',
+    ]
+    return base + [DISASTER_COPING_CAPACITY] if refine_code else base
+
+
+#: Kept for any external code that still imports the flat list; reflects refine_code=False.
+SUPPLY_RISK_INDICATORS = supply_risk_indicators(False)
 
 VULNERABILITY_INDICATORS = [
     'Economic importance', 'Domestically required demand', 'Share of global production',
@@ -84,7 +102,8 @@ SUPPLY_RISK_UNIT_RESCALING = {
     'Concentration of production': 10_000,
     'Feasibility of exploration projects': 100,  # percent x score -> score
     'Political stability': 100,
-    'Trade barriers': 100,
+    'Trade barriers': 100,                     # ETI 2016, or refine_code's KOFGI - same scale
+    'Disaster Coping Capacity': 100,            # refine_code only: same "mix% x score / 100" pattern
 }
 
 #: Policy Perception Index: the "100 - PPI" gap is taken relative to this maximum.
@@ -150,10 +169,33 @@ class Settings:
                       "global" -> sourcing mix = world production shares, no vulnerability
     data_dir          folder with the supporting files
     results_dir       folder where CSVs and figures are written (created automatically if missing)
-    refine_code       False (default) calculates the data as the original Japan/Japan Global scripts
-                          True add refinements listed below:
-                                (1.) !!!!
-                                (2.) !!!!
+    refine_code       False (default) calculates the data exactly as the original Japan/Japan Global
+                          scripts (additive aggregation, 0..1 scale, 0.8 target floor, ETI 2016, no
+                          Disaster Coping Capacity, discrete iso-criticality lines on the matrix).
+                          True adds all of the following refinements together:
+                                (1.) "Trade barriers" uses the KOFGI indicator instead of ETI 2016
+                                     (pre-scaled to the same units in Indicators.xlsx - no conversion
+                                     needed, just a different source column).
+                                (2.) a new Supply Risk category, "Disaster coping capacity" (indicator
+                                     DCC), is added, with the same implicit weight as every other
+                                     category (it is just one more column in the aggregation - see (3)).
+                                     In this dataset a HIGHER DCC value means LESS coping capacity, i.e.
+                                     MORE risk, so - unlike Mining capacity - it is scored directly, not
+                                     inverted, in distance_to_target.
+                                (3.) indicators are combined with a geometric mean instead of a sum
+                                     (see geometric_mean, add_totals).
+                                (4.) every indicator is rescaled to [1, 10] instead of [0, 1] (see
+                                     min_max), and the DISTANCE_TO_TARGET_FLOOR step is skipped -
+                                     both match the UK Critical Minerals Assessment (Mudd et al. 2024).
+                                (5.) the Supply Risk and Vulnerability 'Scaled total' scores (but not
+                                     Social/Environmental) are themselves rescaled to [1, 10] as well,
+                                     matching the UK CA's S/V dimension scores.
+                                (6.) a 'Final Criticality' score is added: the geometric mean of a
+                                     material's Supply Risk and Vulnerability scores (import mode only).
+                                (7.-8.) the criticality matrix drops the discrete 0.2/0.4/0.6/0.8
+                                     iso-criticality lines and the '1'-'5' zone markers, replacing them
+                                     with a continuous shaded Final Criticality gradient, matching the
+                                     UK CA's criticality plot (Figure 5).
                           Also, corrects some data/logic problems found within the original scripts:
                                 (a) Reserves.xlsx has country names with trailing spaces
                                     (e.g. "China ") that never match the other tables, so most
@@ -165,6 +207,9 @@ class Settings:
                                     with capitals, so the original found no entry and used 0
                                     but Rare earths should be 0.67.
     show_plots      open the criticality-matrix window at the end
+    criticality_threshold  refine_code only: Final Criticality value to draw as a single
+                          inline-labelled contour line on the matrix (e.g. 4.0, the UK CA's
+                          own adopted threshold - Mudd et al. 2024, Section 2.5.4). None skips it.
 
     Country-specific inputs:
     imports_file                            UN Comtrade import file of THE COUNTRY (all materials)
@@ -179,6 +224,7 @@ class Settings:
     data_dir: Path = Path('Supporting files')
     results_dir: Path = Path('Results')
     refine_code: bool = False
+    criticality_threshold: float | None = 4.0   # refine_code only: drawn as an inline-labelled line
     show_plots: bool = True
     imports_file: str | None = None          # default: Comtrade_all_2020.csv (Japan) / Comtrade_all_<year>.csv
     value_added_file: str | None = None
@@ -262,10 +308,11 @@ def load_imports(path: Path, country: str) -> dict[str, pd.DataFrame]:
       itself is 100 %).  The World row is later used as "total imports".
     """
     columns = ['Commodity', 'PartnerDesc', 'PartnerISO', 'NetWgt']
-    has_reporter = 'ReporterDesc' in pd.read_csv(path, nrows=0).columns
-    raw = pd.read_csv(path, usecols=columns + (['ReporterDesc'] if has_reporter else []))
-    if has_reporter:
-        reporters = set(raw['ReporterDesc'].dropna().astype(str).str.strip())
+    header = pd.read_csv(path, nrows=0).columns
+    reporter_col = next((c for c in header if c.lower() == 'reporterdesc'), None)
+    raw = pd.read_csv(path, usecols=columns + ([reporter_col] if reporter_col else []))
+    if reporter_col:
+        reporters = set(raw[reporter_col].dropna().astype(str).str.strip())
         if reporters != {country}:
             raise ValueError(f"'{path.name}' contains imports of {sorted(reporters)}, not of {country}. "
                              f"Provide the Comtrade import file of {country} (see Settings.imports_file).")
@@ -531,9 +578,20 @@ def mining_capacity(md: MaterialData) -> float:
     return float(per_country.replace(np.inf, 0).sum())
 
 
-def trade_barriers(md: MaterialData, inputs: Inputs) -> float:
-    """Mix-weighted Enabling Trade Index (ETI): barriers to trade in the sourcing countries."""
-    return weighted_country_score(md.mix, inputs.by_country['ETI 2016'])
+def trade_barriers(md: MaterialData, inputs: Inputs, settings: Settings) -> float:
+    """Mix-weighted trade-barrier score for the sourcing countries.
+    settings.refine_code=False: Enabling Trade Index (ETI 2016, the original indicator).
+    settings.refine_code=True : KOFGI (pre-scaled to the same units as ETI 2016, so no extra
+    conversion is needed here - only the source column changes)."""
+    column = 'KOFGI' if settings.refine_code else 'ETI 2016'
+    return weighted_country_score(md.mix, inputs.by_country[column])
+
+
+def disaster_coping_capacity(md: MaterialData, inputs: Inputs) -> float:
+    """refine_code only: mix-weighted DCC of the sourcing countries. In this dataset, a HIGHER
+    DCC value means LESS disaster-coping capacity (i.e. MORE supply risk) - so unlike Mining
+    capacity, this category is scored directly in distance_to_target, not inverted."""
+    return weighted_country_score(md.mix, inputs.by_country['DCC'])
 
 
 def demand_growth(md: MaterialData) -> float:
@@ -659,19 +717,23 @@ def compute_raw_indicators(materials: dict[str, MaterialData], inputs: Inputs, s
                              for name, fn in zip(columns, functions)},
                             index=list(materials))
 
+    supply_risk_functions = [
+        lambda md: concentration_of_production(md, settings),
+        concentration_of_reserves,
+        lambda md: feasibility_of_exploration(md, inputs, settings),
+        lambda md: political_stability(md, inputs),
+        mining_capacity,
+        lambda md: trade_barriers(md, inputs, settings),
+        demand_growth,
+        lambda md: price_fluctuation(md, inputs),
+        lambda md: primary_material_use(md, inputs),
+        lambda md: occurrence_of_coproduction(md, inputs),
+    ]
+    if settings.refine_code:
+        supply_risk_functions.append(lambda md: disaster_coping_capacity(md, inputs))
+
     tables = {
-        'supply_risk': table(SUPPLY_RISK_INDICATORS, [
-            lambda md: concentration_of_production(md, settings),
-            concentration_of_reserves,
-            lambda md: feasibility_of_exploration(md, inputs, settings),
-            lambda md: political_stability(md, inputs),
-            mining_capacity,
-            lambda md: trade_barriers(md, inputs),
-            demand_growth,
-            lambda md: price_fluctuation(md, inputs),
-            lambda md: primary_material_use(md, inputs),
-            lambda md: occurrence_of_coproduction(md, inputs),
-        ]),
+        'supply_risk': table(supply_risk_indicators(settings.refine_code), supply_risk_functions),
         'social': table(SOCIAL_INDICATORS, [
             lambda md: small_scale_mining(md, inputs),
             lambda md: geopolitical_risk(md, inputs),
@@ -699,39 +761,97 @@ def compute_raw_indicators(materials: dict[str, MaterialData], inputs: Inputs, s
 # 7. SCALING
 # =============================================================================
 
-def distance_to_target(raw_supply_risk: pd.DataFrame, targets: pd.Series) -> pd.DataFrame:
+def _resolve_targets(columns: list, targets: pd.Series) -> pd.Series:
+    """Target value per Supply Risk column. Warns and falls back to this run's own mean raw
+    score for any column with no target in the 'Categories and targets' sheet (currently only
+    possible for refine_code's Disaster Coping Capacity) - someone should still add a real,
+    deliberately chosen target there; this keeps the pipeline running in the meantime."""
+    missing = [c for c in columns if c not in targets.index]
+    if not missing:
+        return targets
+    warnings.warn(
+        f"No target value for {missing} in the 'Categories and targets' sheet - add a row there "
+        "for a meaningful threshold. Using this run's own mean score as a placeholder target "
+        "for now (every material will be compared only to each other, not an external benchmark).",
+        stacklevel=2)
+    return targets  # caller fills the gap per-column, see distance_to_target
+
+
+def distance_to_target(raw_supply_risk: pd.DataFrame, targets: pd.Series, refine_code: bool = False) -> pd.DataFrame:
     """Supply risk only: express each indicator relative to its target.
 
-    1. bring indicators to the unit of the targets (SUPPLY_RISK_UNIT_RESCALING)
-    2. score = (value / target)^2  - the further above the target, the higher the risk
-       Mining capacity is inverted, (target / value)^2, because MORE remaining years
-       means LESS risk (value 0 -> score 0, as in the original)
-    3. scores below DISTANCE_TO_TARGET_FLOOR are set to 0 ("target met, no risk").
-    Columns are ordered alphabetically with Mining capacity last (as in the original CSVs).
+    1. bring indicators to the unit of the targets (SUPPLY_RISK_UNIT_RESCALING);
+    2. score = (value / target)^2  - the further above the target, the higher the risk.
+       Categories in INVERTED_SUPPLY_RISK_CATEGORIES (currently just Mining capacity) are
+       inverted, (target / value)^2, because for these a HIGHER raw value means LESS risk
+       (value 0 -> score 0, as in the original). refine_code's Disaster coping capacity is
+       NOT inverted: in this dataset a higher DCC value means MORE risk, so it is scored the
+       same direct way as the rest;
+    3. refine_code=False (original method): scores below DISTANCE_TO_TARGET_FLOOR are set to 0
+       ("target met, no risk"). refine_code=True: this floor is skipped entirely (see min_max
+       for why - the [1, 10] rescaling plus a geometric mean no longer need it).
+    Columns are ordered alphabetically with the inverted categories last (as in the original CSVs).
     """
+    columns = supply_risk_indicators(refine_code)
     values = raw_supply_risk.copy()
     for column, divisor in SUPPLY_RISK_UNIT_RESCALING.items():
-        values[column] = values[column] / divisor
+        if column in values.columns:
+            values[column] = values[column] / divisor
 
-    others = [c for c in SUPPLY_RISK_INDICATORS if c != MINING_CAPACITY]
-    score = (values[others] / targets[others]) ** 2
-    score[MINING_CAPACITY] = ((targets[MINING_CAPACITY] / values[MINING_CAPACITY]) ** 2
-                              ).astype(float).replace(np.inf, 0)
-    score = score[sorted(others) + [MINING_CAPACITY]]
-    return score.mask(score < DISTANCE_TO_TARGET_FLOOR, 0)
+    inverted = [c for c in columns if c in INVERTED_SUPPLY_RISK_CATEGORIES]
+    direct = [c for c in columns if c not in INVERTED_SUPPLY_RISK_CATEGORIES]
+
+    missing = [c for c in columns if c not in targets.index]
+    if missing:
+        _resolve_targets(columns, targets)   # just emits the warning
+        targets = targets.copy()
+        for column in missing:
+            # self-calibrating placeholder: this run's own mean of the already-unit-rescaled
+            # (and, for inverted categories, already-inverted-friendly) raw value
+            targets[column] = float(values[column].mean())
+
+    score = (values[direct] / targets[direct]) ** 2
+    for column in inverted:
+        score[column] = ((targets[column] / values[column]) ** 2).astype(float).replace(np.inf, 0)
+    score = score[sorted(direct) + sorted(inverted)]
+    if not refine_code:
+        score = score.mask(score < DISTANCE_TO_TARGET_FLOOR, 0)
+    return score
 
 
-def min_max(table: pd.DataFrame) -> pd.DataFrame:
-    """Rescale every column to 0..1 (lowest material = 0, highest = 1)."""
-    return (table - table.min()) / (table.max() - table.min())
+def min_max(table: pd.DataFrame, low: float = 0.0, high: float = 1.0) -> pd.DataFrame:
+    """Rescale every column to low..high (lowest material -> low, highest -> high).
+
+    Defaults to 0..1 (the original method). refine_code uses low=1.0, high=10.0, matching the
+    2024 UK Criticality Assessment (Mudd et al., Section 2.5.1). low=1 instead of 0 matters a
+    great deal once indicators are combined with a geometric mean (see geometric_mean): a
+    factor of 1 leaves a product unchanged, whereas a factor of 0 would collapse it entirely -
+    every single material would have at least one indicator floored or min-maxed to exactly 0
+    under the original [0, 1] scaling, so a geometric mean there would be useless.
+    """
+    return low + (high - low) * (table - table.min()) / (table.max() - table.min())
 
 
-def add_totals(scaled: pd.DataFrame) -> pd.DataFrame:
-    """Append 'Total' (sum of indicators) and 'Scaled total' (Total rescaled to 0..1).
-    'Scaled total' is the category score that feeds the criticality matrix."""
+def geometric_mean(table: pd.DataFrame) -> pd.Series:
+    """Row-wise geometric mean of already-scaled indicators: (x1 * x2 * ... * xn) ** (1/n).
+    refine_code's multiplicative aggregation - see add_totals and min_max (its [1, 10] scaling
+    is what keeps this well-behaved; a geometric mean of [0, 1]-scaled indicators would
+    collapse to 0 for almost every material, since a single 0 factor zeroes the whole product).
+    """
+    return table.prod(axis=1) ** (1 / table.shape[1])
+
+
+def add_totals(scaled: pd.DataFrame, refine_code: bool = False, final_scale: tuple = (0.0, 1.0)) -> pd.DataFrame:
+    """Append 'Total' (indicators combined additively, or - if refine_code - via geometric_mean)
+    and 'Scaled total' (Total rescaled, across materials, to `final_scale`). 'Scaled total' is
+    the category score that feeds the criticality matrix. (0.0, 1.0) is the original method's
+    range; refine_code passes (1.0, 10.0) for Supply Risk and Vulnerability specifically (see
+    run_assessment), matching the UK CA's S/V dimension scores - Social/Environmental keep
+    (0.0, 1.0) even under refine_code, since the UK CA has no equivalent of those dimensions."""
     result = scaled.copy()
-    result['Total'] = scaled.sum(axis=1)
-    result['Scaled total'] = (result['Total'] - result['Total'].min()) / (result['Total'].max() - result['Total'].min())
+    result['Total'] = geometric_mean(scaled) if refine_code else scaled.sum(axis=1)
+    low, high = final_scale
+    result['Scaled total'] = low + (high - low) * (result['Total'] - result['Total'].min()) / (result['Total'].max() - result['Total'].min())
     return result
 
 
@@ -784,8 +904,17 @@ def plot_stacked_bars(totals: pd.DataFrame, category: Category, settings: Settin
     plt.close(ax.get_figure())
 
 
+def final_criticality(final: dict[str, pd.DataFrame]) -> pd.Series:
+    """refine_code only: geometric mean of a material's Supply Risk and Vulnerability
+    'Scaled total' scores - sqrt(Supply Risk x Vulnerability), matching the UK CA's own
+    criticality score (Mudd et al. 2024, Section 2.5.4). Import mode only (global mode has
+    no Vulnerability)."""
+    return (final['supply_risk']['Scaled total'] * final['vulnerability']['Scaled total']) ** 0.5
+
+
 def export_scaled_totals(final: dict[str, pd.DataFrame], settings: Settings) -> None:
-    """Write one table with the 'Scaled total' of every category (one row per material).
+    """Write one table with the 'Scaled total' of every category (one row per material), plus
+    'Final Criticality' if refine_code and Vulnerability was computed (import mode).
 
     Column names match 'Result_total.csv', so these numbers can be copied straight into
     the matrix input file (which otherwise has to be kept in sync by hand).
@@ -793,6 +922,8 @@ def export_scaled_totals(final: dict[str, pd.DataFrame], settings: Settings) -> 
     names = {'supply_risk': 'Supply Risk', 'vulnerability': 'Vulnerability',
              'social': 'Social Standards Compliance', 'environmental': 'Environmental Standards Compliance'}
     table = pd.DataFrame({names[key]: df['Scaled total'] for key, df in final.items()})
+    if settings.refine_code and 'vulnerability' in final:
+        table['Final Criticality'] = final_criticality(final)
     settings.results_dir.mkdir(parents=True, exist_ok=True)
     table.to_csv(settings.results_dir / f'Scaled totals{settings.suffix}.csv', index_label='Material')
 
@@ -804,14 +935,23 @@ HOTSPOT_STYLES = {
     'environmental': dict(c='green', marker='^', s=40, label='Environmental hotspot'),
     'both':          dict(c='black', marker='^', s=40, label='Social and environmental hotspot'),
 }
-#: Criticality iso-lines: supply risk = k / vulnerability. (k, color, line width)
+#: refine_code=False only: criticality iso-lines, supply risk = k / vulnerability. (k, color, width)
 CRITICALITY_LINES = [(0.2, '#cccccc', 1.5), (0.4, '#969696', 1), (0.6, '#525252', 1), (0.8, '#252525', 1)]
-#: Position of the criticality zone numbers 1-5 printed along the top of the matrix.
+#: refine_code=False only: position of the criticality zone numbers 1-5 along the top of the matrix.
 ZONE_LABEL_X = [0.1, 0.3, 0.5, 0.7, 0.95]
+#: refine_code=True only: colormap for the continuous Final Criticality gradient - light for low
+#: criticality, dark red for high, matching the UK CA's shaded criticality plot (Figure 5).
+CRITICALITY_COLORMAP = 'Reds'
+#: refine_code=True only: width of each visually-distinct Final Criticality shading band,
+#: matching the banded look of the UK CA's own criticality plot (Figure 5) rather than an
+#: ultra-smooth gradient.
+CRITICALITY_BAND_WIDTH = 0.5
+#: Colour of the single highlighted criticality_threshold contour line.
+CRITICALITY_THRESHOLD_COLOR = '#3f3f3f'
 
 
 def hotspot_class(label: str) -> str:
-    """Map the free-text 'Hot Spots' label of the matrix input to a style key"""
+    """Map a free-text 'Hot Spots' label to a style key."""
     text = label.lower()
     if 'neither' in text:
         return 'neither'
@@ -820,40 +960,103 @@ def hotspot_class(label: str) -> str:
     return 'social' if 'social' in text else 'environmental'
 
 
-def plot_criticality_matrix(settings: Settings) -> None:
-    """Criticality matrix: vulnerability (x) against supply risk (y) with iso-criticality lines.
+def _live_hotspot_labels(final: dict[str, pd.DataFrame]) -> pd.Series | None:
+    """refine_code only, used when there is no hand-maintained Result_total*.csv for this run
+    (the usual case, since that file is on the original 0..1 scale and this run is on [1, 10]).
+    Flags the 5 highest-scoring materials in Social and in Environmental as hotspots - the same
+    "5 worst-performing materials per sub-dimension" convention the SCARCE method itself and
+    Marinova et al. (2023) use. Returns None if Social/Environmental weren't computed."""
+    if 'social' not in final or 'environmental' not in final:
+        return None
+    social_top5 = set(final['social']['Scaled total'].nlargest(5).index)
+    environmental_top5 = set(final['environmental']['Scaled total'].nlargest(5).index)
+    def classify(material):
+        in_social, in_env = material in social_top5, material in environmental_top5
+        if in_social and in_env:
+            return 'both'
+        if in_social:
+            return 'social'
+        if in_env:
+            return 'environmental'
+        return 'neither'
+    index = final['supply_risk'].index
+    return pd.Series([classify(m) for m in index], index=index)
 
-    Input is the hand-maintained 'Result_total[_global].csv' with columns Material (label),
-    Supply Risk, Vulnerability and Hot Spots.  Supply Risk / Vulnerability are the
-    'Scaled total' columns exported by this script.
+
+def plot_criticality_matrix(settings: Settings, final: dict[str, pd.DataFrame] | None = None) -> None:
+    """Criticality matrix: vulnerability (x) against supply risk (y).
+
+    refine_code=False (original method): reads the hand-maintained 'Result_total[_global].csv'
+    (columns Material, Supply Risk, Vulnerability, Hot Spots) and draws the original discrete
+    0.2/0.4/0.6/0.8 iso-criticality lines with '1'-'5' zone markers along the top.
+
+    refine_code=True: uses this run's own live results (`final`, on the [1, 10] scale) instead
+    of that file - the scales no longer match, so the static CSV would be wrong here. Hotspots
+    come from _live_hotspot_labels unless a matching Result_total*.csv happens to exist. Replaces
+    the discrete lines and zone markers with a continuous Final Criticality gradient (sqrt(x*y)
+    everywhere on the plot, not just at the 35 material points), matching the UK CA's criticality
+    plot (Mudd et al. 2024, Figure 5): light = low criticality, dark red = high.
     """
-    try:
-        path = _find_file(settings.matrix_input_file, settings.data_dir, settings.results_dir)
-    except FileNotFoundError:
-        print(f"  Criticality matrix skipped: '{settings.matrix_input_file}' not found. Create it from "
-              f"'Scaled totals{settings.suffix}.csv' (add a 'Material' label and a 'Hot Spots' column).")
-        return
-    results = pd.read_csv(path)
-    results['style'] = results['Hot Spots'].map(hotspot_class)
-    figsize, label_offset, label_align = ((14, 10), 0.01, 'center') if settings.mode == 'import' else ((10, 10), 0.02, 'right')
+    live = settings.refine_code and final is not None and 'vulnerability' in final
+    if live:
+        results = pd.DataFrame({
+            'Material': final['supply_risk'].index,
+            'Supply Risk': final['supply_risk']['Scaled total'].values,
+            'Vulnerability': final['vulnerability']['Scaled total'].values,
+            'Final Criticality': final_criticality(final).values,
+        })
+        labels = _live_hotspot_labels(final)
+        results['style'] = labels.values if labels is not None else 'neither'
+    else:
+        try:
+            path = _find_file(settings.matrix_input_file, settings.data_dir, settings.results_dir)
+        except FileNotFoundError:
+            print(f"  Criticality matrix skipped: '{settings.matrix_input_file}' not found. Create it from "
+                  f"'Scaled totals{settings.suffix}.csv' (add a 'Material' label and a 'Hot Spots' column).")
+            return
+        results = pd.read_csv(path)
+        results['style'] = results['Hot Spots'].map(hotspot_class)
+
+    low, high = (1.0, 10.0) if live else (0.0, 1.0)
+    span = high - low
+    figsize, label_offset, label_align = ((14, 10), 0.01 * span, 'center') if settings.mode == 'import' else ((10, 10), 0.02 * span, 'right')
 
     fig, ax = plt.subplots(figsize=figsize)
-    x = np.arange(0.01, 2.0, 0.01)
-    for k, colour, width in CRITICALITY_LINES:
-        ax.plot(x, k / x, color=colour, linewidth=width)
+    if live:
+        grid = np.linspace(low, high, 300)
+        grid_v, grid_s = np.meshgrid(grid, grid)
+        criticality_field = np.sqrt(grid_v * grid_s)
+        # Band edges every CRITICALITY_BAND_WIDTH, covering the field's full range (sqrt(low*low)
+        # to sqrt(high*high) = low to high) so the shading reads as distinct steps, not a smooth blend.
+        band_edges = np.arange(low, high + CRITICALITY_BAND_WIDTH, CRITICALITY_BAND_WIDTH)
+        fill = ax.contourf(grid_v, grid_s, criticality_field, levels=band_edges,
+                           cmap=CRITICALITY_COLORMAP, zorder=1)
+        fig.colorbar(fill, ax=ax, orientation='vertical', pad=0.02, shrink=0.8, label='Final Criticality')
+        if settings.criticality_threshold is not None:
+            threshold_line = ax.contour(grid_v, grid_s, criticality_field,
+                                        levels=[settings.criticality_threshold],
+                                        colors=CRITICALITY_THRESHOLD_COLOR, linewidths=2, zorder=2)
+            ax.clabel(threshold_line, fmt=lambda v: f'Criticality = {v:g}', inline=True, fontsize=9)
+    else:
+        x = np.arange(0.01, 2.0, 0.01)
+        for k, colour, width in CRITICALITY_LINES:
+            ax.plot(x, k / x, color=colour, linewidth=width)
+        for number, x_pos in enumerate(ZONE_LABEL_X, start=1):
+            ax.text(x_pos, 0.925, str(number), fontsize=10, bbox=dict(boxstyle='round', facecolor='#ffffff'),
+                    verticalalignment='center', horizontalalignment='center')
+
     for style, group in results.groupby('style'):
-        ax.scatter(group['Vulnerability'], group['Supply Risk'], **HOTSPOT_STYLES[style])
-    for number, x_pos in enumerate(ZONE_LABEL_X, start=1):
-        ax.text(x_pos, 0.925, str(number), fontsize=10, bbox=dict(boxstyle='round', facecolor='#ffffff'),
-                verticalalignment='center', horizontalalignment='center')
+        ax.scatter(group['Vulnerability'], group['Supply Risk'], zorder=10, **HOTSPOT_STYLES[style])
     for _, row in results.iterrows():
-        ax.annotate(row['Material'], (row['Vulnerability'], row['Supply Risk'] + label_offset), ha=label_align)
+        label = row['Material'] if 'Final Criticality' not in results.columns else f"{row['Material']} ({row['Final Criticality']:.2f})"
+        ax.annotate(label, (row['Vulnerability'], row['Supply Risk'] + label_offset), ha=label_align,
+                   fontsize=8 if live else 10, zorder=10)
 
     ax.set(xlabel='Vulnerability', ylabel='Supply Risk')
     ax.legend(loc='lower center', bbox_to_anchor=(0.5, -0.15), frameon=False, ncol=4)
     ax.grid()
-    ax.set_xlim(-0.05, 1.05)
-    ax.set_ylim(-0.05, 1.05)
+    ax.set_xlim(low - 0.05 * span, high + 0.05 * span)
+    ax.set_ylim(low - 0.05 * span, high + 0.05 * span)
     settings.results_dir.mkdir(parents=True, exist_ok=True)
     fig.savefig(settings.results_dir / f'Matrix{settings.suffix}.png', dpi=450, bbox_inches='tight', pad_inches=0.0)
     if settings.show_plots:
@@ -869,28 +1072,42 @@ def run_assessment(settings: Settings) -> dict[str, pd.DataFrame]:
     """Run the complete SCARCE workflow and return the final tables (with totals).
 
     Steps: load -> sourcing mix -> raw indicators -> scaling -> CSV/plots -> matrix.
-    Also writes 'Scaled totals[_global].csv' (all category scores in one table).
+    Also writes 'Scaled totals[_global].csv' (all category scores in one table, plus
+    'Final Criticality' if refine_code).
+
+    refine_code bundles every refinement listed in the Settings docstring: KOFGI instead of
+    ETI 2016, the Disaster Coping Capacity category, geometric-mean aggregation, [1, 10]
+    indicator scaling with no 0.8 floor, [1, 10] Supply Risk/Vulnerability scores, Final
+    Criticality, and the continuous-gradient criticality matrix.
     """
     print(f"SCARCE - {settings.country}, mode '{settings.mode}'"
-          f"{' (known issues corrected)' if settings.refine_code else ''}")
+          f"{' [refine_code: KOFGI, Disaster Coping Capacity, geometric mean, 1-10 scale]' if settings.refine_code else ''}")
     inputs = load_inputs(settings)
     materials = build_material_data(inputs, settings)
     raw = compute_raw_indicators(materials, inputs, settings)
 
+    indicator_low, indicator_high = (1.0, 10.0) if settings.refine_code else (0.0, 1.0)
+
     # Supply risk is compared with targets first; the other categories are only min-max scaled.
-    scaled = {'supply_risk': min_max(distance_to_target(raw['supply_risk'], inputs.targets))}
-    scaled.update({key: min_max(table) for key, table in raw.items() if key != 'supply_risk'})
+    scaled = {'supply_risk': min_max(distance_to_target(raw['supply_risk'], inputs.targets, settings.refine_code),
+                                     indicator_low, indicator_high)}
+    scaled.update({key: min_max(table, indicator_low, indicator_high)
+                   for key, table in raw.items() if key != 'supply_risk'})
 
     final = {}
     for category in CATEGORIES:
         if category.key not in scaled:
             continue
-        final[category.key] = add_totals(scaled[category.key])
+        # refine_code rescales Supply Risk/Vulnerability's final score to [1, 10] too, matching
+        # the UK CA's S/V dimension scores - Social/Environmental stay on [0, 1] either way.
+        final_low, final_high = ((1.0, 10.0) if settings.refine_code and category.key in ('supply_risk', 'vulnerability')
+                                 else (0.0, 1.0))
+        final[category.key] = add_totals(scaled[category.key], settings.refine_code, (final_low, final_high))
         export_tables(category, scaled[category.key], final[category.key], settings)
         plot_stacked_bars(final[category.key], category, settings)
         print(f"  {category.label}: exported")
 
     export_scaled_totals(final, settings)
-    plot_criticality_matrix(settings)
+    plot_criticality_matrix(settings, final)
     print(f"Done. Results in: {settings.results_dir.resolve()}")
     return final
