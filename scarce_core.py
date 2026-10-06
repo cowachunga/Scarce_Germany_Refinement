@@ -495,7 +495,7 @@ def concentration_of_production(md: MaterialData, settings: Settings) -> float:
     """HHI of the sourcing mix.  Few suppliers -> higher risk."""
     shares = md.mix
     if settings.mode == 'global' and not settings.refine_code:
-        shares = md.production['Percent']          # original behaviour: includes 'Total' (=100 %) -> +1.0
+        shares = md.production['Percent']          # original behavior: includes 'Total' (=100 %) -> +1.0
     return herfindahl(shares)
 
 
@@ -622,7 +622,7 @@ def geopolitical_risk(md: MaterialData, inputs: Inputs) -> float:
 
 
 def human_right_abuse(md: MaterialData, inputs: Inputs) -> float:
-    """Mix x (forced labour, child labour, torture score)^2 of the sourcing countries."""
+    """Mix x (forced labor, child labor, torture score)^2 of the sourcing countries."""
     return weighted_country_score(md.mix, inputs.by_country['Human right abuse scaled'], power=2)
 
 
@@ -771,7 +771,7 @@ def export_tables(category: Category, scaled: pd.DataFrame, totals: pd.DataFrame
 
 
 def plot_stacked_bars(totals: pd.DataFrame, category: Category, settings: Settings) -> None:
-    """Stacked bar chart: materials sorted by total score, one colour per indicator."""
+    """Stacked bar chart: materials sorted by total score, one color per indicator."""
     data = totals.sort_values('Total', ascending=False).drop(columns=['Total', 'Scaled total'])
     ax = data.plot(kind='bar', stacked=True, figsize=(16, 10), grid=True, zorder=10)
     ax.set_xlabel('Resources', fontsize=12)
@@ -804,7 +804,7 @@ HOTSPOT_STYLES = {
     'environmental': dict(c='green', marker='^', s=40, label='Environmental hotspot'),
     'both':          dict(c='black', marker='^', s=40, label='Social and environmental hotspot'),
 }
-#: Criticality iso-lines: supply risk = k / vulnerability. (k, colour, line width)
+#: Criticality iso-lines: supply risk = k / vulnerability. (k, color, line width)
 CRITICALITY_LINES = [(0.2, '#cccccc', 1.5), (0.4, '#969696', 1), (0.6, '#525252', 1), (0.8, '#252525', 1)]
 #: Position of the criticality zone numbers 1-5 printed along the top of the matrix.
 ZONE_LABEL_X = [0.1, 0.3, 0.5, 0.7, 0.95]

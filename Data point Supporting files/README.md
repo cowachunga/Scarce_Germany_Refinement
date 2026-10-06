@@ -8,3 +8,4 @@ The files are specific to Germany and are seperated by years. They include the f
 2. Indicators file for that specific year
 3. Production file for that specific year
 4. Reserves file for that specific year
+5. Results_total_Germany.csv file - created from generated Scaled totals.csv and used to populate criticality matrix.
