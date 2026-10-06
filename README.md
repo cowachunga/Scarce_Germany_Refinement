@@ -22,9 +22,44 @@ Optional: 'Result_total_Germany.csv' ('Material', 'Supply Risk', 'Vulnerability'
 ## Implementations to refine how SCARCE is calculated
 Refinement to SCARCE code is activated when 'REFINE_CODE = True' in the entry script.
 
-1. 
-2. 
-3. 
+1. Replace the “ETI 2016” indicator with “KOFGI.” These values have already been scaled to match the “ETI 2016” values in the “Indicators.xlsx” spreadsheet.
+2. Add “DCC” as a new indicator under the new category, “Disaster Coping Capacity,” under dimension “Supply Risk.” This new category should have equal weighting as the other categories within “Supply Risk.”
+3. Replace the additive aggregation approach with multiplicative aggregation via the geometric mean. Instead of summing the scaled indicator values, use the geometric mean to obtain the total. Then proceed as normal with the Distance-to-target approach to obtain the final scores.
+4. Modify each indicator's min_max() normalization from [0,1] to [1,10] (like the 2024 UK Criticality Assessment), and remove the 0.8 target floor.
+5. Make the "Supply Risk" and "Vulnerability" scores normalized in the [1,10] scale like the indicators now are, just like the 2024 UK Criticality Assessment does.
+6. Add a "Final Criticality" score for each material, which is the geometric mean of the material's "Supply Risk" and "Vulnerability" scores.
+7. Remove the linearly spaced contour lines on the criticality matrix and their "1" "2" "3" "4" "5" markers on the top of the plot.
+8. Replace the contour lines with color-coded "Final Criticality" convex contour continuous shaded gradients, just like the 2024 UK Criticality Assessment's criticality plot (Fig. 5). These continuous colored gradients should be based on the Final Criticality scores.
+
+### Code modifications to implement code refinement
+| Original lines | Refined lines | Difference in code | Impact on generated results |
+|---|---|---|---|
+| (insert after 56) | 57–84 | Adds `DISASTER_COPING_CAPACITY = 'Disaster coping capacity'`, `INVERTED_SUPPLY_RISK_CATEGORIES = {MINING_CAPACITY}`, and a new function `supply_risk_indicators(refine_code)`. That function returns the original 10 categories, plus DCC as an 11th when `refine_code=True`. | With `refine_code=True`, the Supply Risk tables gain an 11th column, "Disaster coping capacity". With `False`, nothing changes. |
+| 58–70 | 86–88 | The hard-coded `SUPPLY_RISK_INDICATORS = [...]` list is replaced by `SUPPLY_RISK_INDICATORS = supply_risk_indicators(False)`. | None. The list contents are identical; it is kept only for backward compatibility. |
+| 87 | 105–106 | Adds a comment to `'Trade barriers': 100` and a new entry, `'Disaster Coping Capacity': 100`. | This is meant to divide DCC by 100, but it never does (see note 1 below). |
+| 153–156 | 172–198 | The placeholder docstring `(1.) !!!!` / `(2.) !!!!` is replaced by a description of refinements (1)–(8). | None. This is documentation only. |
+| 167, 181 | 210–212, 227 | Adds a new setting, `criticality_threshold: float \| None = 4.0`, with docs. | In refine mode, a labelled contour line at Final Criticality = 4.0 is drawn on the matrix. |
+| 265–268 | 311–315 | `'ReporterDesc' in ...columns` becomes a case-insensitive lookup: `next((c for c in header if c.lower() == 'reporterdesc'), None)`. | This is the only change that can affect results when `refine_code=False`. A trade CSV whose column is spelled differently (e.g. `reporterDesc`) now gets the reporter check applied, where before it was silently skipped. |
+| 534–536 | 581–594 | `trade_barriers(md, inputs)` becomes `trade_barriers(md, inputs, settings)`, using `column = 'KOFGI' if settings.refine_code else 'ETI 2016'`. A new function, `disaster_coping_capacity()`, computes the mix-weighted `DCC` score. | In refine mode, Trade barriers values come from the KOF Globalisation Index instead of ETI 2016, so that column's raw values and rankings change. DCC values are computed for the new column. |
+| 663–674 | 720–736 | The inline lambda list is moved into a `supply_risk_functions` variable. It passes `settings` to `trade_barriers` and appends the DCC function when `refine_code` is on. The table now uses `supply_risk_indicators(settings.refine_code)`. | This wires the KOFGI and DCC changes into the raw Supply Risk table. |
+| 702 | 764–780 | Adds a helper, `_resolve_targets()`, which issues a warning when a category has no target. `distance_to_target` gains a `refine_code` parameter. | A warning is printed if "Disaster coping capacity" has no row in the "Categories and targets" sheet. |
+| 714 | 798–799 | The unit rescaling is now guarded: `if column in values.columns:`. | This prevents a crash when the DCC entry exists but the column doesn't (non-refine mode). |
+| 716–721 | 801–819 | Mining-capacity-only inversion is generalised into `direct` and `inverted` lists. A missing target is filled with `values[column].mean()`. `score.mask(score < 0.8, 0)` now runs only `if not refine_code`. | In refine mode, two things change. First, DCC is scored as `(value / mean)²`, so it is relative to the other materials rather than an external benchmark. Second, the 0.8 floor is gone, so materials that were previously zeroed ("target met") keep their small positive scores, and the min-max spread changes. Mining capacity is unchanged. |
+| 724–726 | 822–832 | `min_max(table)` becomes `min_max(table, low=0.0, high=1.0)`, computing `low + (high-low) * ...`. | In refine mode, all indicators are scaled to [1, 10] instead of [0, 1]. |
+| — | 835–841 | Adds a new function, `geometric_mean()`, computing `table.prod(axis=1) ** (1/n)`. | This supports multiplicative aggregation in refine mode. |
+| 729–734 | 844–854 | `add_totals` gains `refine_code` and `final_scale`. `Total` is computed as `geometric_mean(scaled) if refine_code else scaled.sum(axis=1)`, and `Scaled total` is rescaled to `final_scale`. | This is the biggest change to results. A geometric mean penalises imbalance less and lets no single indicator dominate additively, so material rankings can shift in every category. |
+| 788, 795 (insert before 788) | 907–914, 916–917, 925–926 | Adds `final_criticality() = sqrt(SR × V)` and writes a `Final Criticality` column into `Scaled totals.csv` when refine mode is on and Vulnerability exists. | A new output column appears in import mode only. |
+| 807, 809, 810 | 938–950 | Comments are updated, and three new constants are added: `CRITICALITY_COLORMAP='Reds'`, `CRITICALITY_BAND_WIDTH=0.5`, and `CRITICALITY_THRESHOLD_COLOR`. | These control the look of the refine-mode matrix. |
+| 814 | 954 | Docstring wording only. | None. |
+| (insert before 823) | 963–984 | Adds a new function, `_live_hotspot_labels()`, which flags the top 5 Social and top 5 Environmental materials as hotspots. | In refine mode, the hotspot colours come from computed results instead of the hand-edited `Hot Spots` column. |
+| 823–838 | 986–1022 | `plot_criticality_matrix(settings)` becomes `plot_criticality_matrix(settings, final)`. In refine/import mode, it builds the plot data from live `final` results on the [1, 10] scale instead of reading `Result_total.csv`. Label offsets scale with `span`. | The refine-mode matrix plots the current run's scores directly, with no manual CSV step needed. |
+| 841–843, 846–848 | 1025–1047 | The `k/x` iso-lines and the "1"–"5" zone labels are kept only in the `else` branch. Refine mode instead draws `contourf` bands of `sqrt(V × S)` with a colorbar and an optional threshold contour. | Refine mode shows a shaded, banded criticality gradient instead of 5 discrete zones. |
+| 845, 850 | 1049, 1051–1053 | Scatter points get `zorder=10`. Labels become `"Material (Final Criticality)"`, with `fontsize=8` in refine mode. | Points and labels sit above the shading, and each label shows its score. |
+| 855–856 | 1058–1059 | Axis limits change from fixed `(-0.05, 1.05)` to `(low - 0.05*span, high + 0.05*span)`. | Axes span roughly 0.55–10.45 in refine mode. |
+| 872, 875 | 1075–1084 | Docstring updated. The console banner changes from "(known issues corrected)" to list the refinements. | Printed text only. |
+| 879–882 | 1089–1095 | `indicator_low, indicator_high` are set to (1, 10) in refine mode, and these plus `refine_code` are passed into `distance_to_target` and `min_max`. | Applies the [1, 10] scaling and the no-floor rule to all categories. |
+| 888 | 1101–1105 | Supply Risk and Vulnerability `Scaled total` are scaled to [1, 10] in refine mode. Social and Environmental stay on [0, 1]. | In the output CSVs, Supply Risk and Vulnerability scores are on 1–10 while Social and Environmental remain on 0–1, so they are no longer directly comparable across categories. |
+| 894 | 1111 | `plot_criticality_matrix(settings)` becomes `plot_criticality_matrix(settings, final)`. | Gives the plot access to the live results. |
 
 ## Issues found in the original scripts
 Set 'REFINE_CODE = True' in the entry script to correct 1–3 (only supply risk changes but the top-5 stays the same).
