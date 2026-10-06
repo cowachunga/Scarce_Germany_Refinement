@@ -26,7 +26,7 @@ DATA_DIR = Path('Supporting files')                   # folder with the input fi
 RESULTS_DIR = Path('Results_Germany_Global')                 # folder for CSV files and figures (created automatically)
 REFINE_CODE = False                                   # False = reproduce the data as the original Japan script
                                                       # True  = add refinements listed in scarce_core.Settings
-SHOW_PLOTS = True                                     # show the criticality matrix in a window
+SHOW_PLOTS = False                                     # show the criticality matrix in a window
 # ------------------------------------------------------------------------------
 
 if __name__ == '__main__':
