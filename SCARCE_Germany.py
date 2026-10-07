@@ -39,7 +39,7 @@ from scarce_core import Settings, run_assessment
 
 # ----------------------------- USER SETTINGS ---------------------------------
 DATA_DIR = Path('Supporting files')                                     # folder with the input files
-RESULTS_DIR = Path('Results_Germany')                                   # folder for CSV files and figures (created automatically)
+RESULTS_DIR = Path('Results_Germany_refined')                                   # folder for CSV files and figures (created automatically)
 REFINE_CODE = True                                                     # False = reproduce the data as the original Japan script
                                                                         # True  = add refinements listed in scarce_core.Settings
 SHOW_PLOTS = True                                                       # show the criticality matrix in a window
