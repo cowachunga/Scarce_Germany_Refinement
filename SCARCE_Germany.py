@@ -39,12 +39,12 @@ from scarce_core import Settings, run_assessment
 
 # ----------------------------- USER SETTINGS ---------------------------------
 DATA_DIR = Path('Supporting files')                                     # folder with the input files
-RESULTS_DIR = Path('Results_Germany_refined')                                   # folder for CSV files and figures (created automatically)
-REFINE_CODE = True                                                     # False = reproduce the data as the original Japan script
+RESULTS_DIR = Path('Results_Germany')                                   # folder for CSV files and figures (created automatically)
+REFINE_CODE = False                                                     # False = reproduce the data as the original Japan script
                                                                         # True  = add refinements listed in scarce_core.Settings
 SHOW_PLOTS = True                                                       # show the criticality matrix in a window
 
-IMPORTS_FILE = 'Comtrade_all_2017.csv'                           # Germany's imports (UN Comtrade)
+IMPORTS_FILE = 'Comtrade_all_2024.csv'                           # Germany's imports (UN Comtrade)
 #VALUE_ADDED_FILE = 'Germany_value_added.csv'                    # Industry, Value added
 #ECONOMIC_IMPORTANCE_FILE = 'Germany_economic_importance.csv'    # Material, Industry, Share (using built-in file from Japan)
 # ------------------------------------------------------------------------------

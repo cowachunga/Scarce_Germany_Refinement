@@ -105,9 +105,8 @@ SUPPLY_RISK_UNIT_RESCALING = {
     'Trade barriers': 100,                     # ETI 2016, or refine_code's KOFGI - same scale
     'Disaster Coping Capacity': 100,            # refine_code only: same "mix% x score / 100" pattern
 }
-
-#: Policy Perception Index: the "100 - PPI" gap is taken relative to this maximum.
-PPI_REFERENCE_MAX = 99.07
+#: Policy Perception Index: the "100 - PPI" gap is taken relative to this maximum. This will be removed as the PPI values from Indicators.xlsx are already inverted.
+#: PPI_REFERENCE_MAX = 99.07
 
 #: After the distance-to-target step, scores below this are treated as "no risk".
 #: (score = (value/target)^2, so 0.8 is roughly "value below ~90 % of the target").
@@ -550,12 +549,12 @@ def feasibility_of_exploration(md: MaterialData, inputs: Inputs, settings: Setti
     """Political/societal hurdles to opening new mines in countries that hold reserves.
 
     For each country with reserves AND a place in the sourcing mix:
-    mix share x (PPI_REFERENCE_MAX - Policy Perception Index).  
+    mix share x PPI score (Indicators.xlsx 'PPI 2020', already a gap: higher = worse).
     A high PPI means the investment climate for mining is poor, so large value = risky.
     A country is only counted if its production data are complete (import mode: latest year,
     global mode: all years) - as in the original.
     """
-    gap = PPI_REFERENCE_MAX - inputs.by_country['PPI 2020']
+    gap = inputs.by_country['PPI 2020']
     required = md.year_columns if settings.mode == 'global' else md.year_columns[-1:]
     complete = (md.production[required].assign(share=md.mix)
                 .reindex(md.reserves.index).dropna())
