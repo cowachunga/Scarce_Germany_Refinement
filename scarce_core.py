@@ -112,11 +112,10 @@ SUPPLY_RISK_UNIT_RESCALING = {
 #: (score = (value/target)^2, so 0.8 is roughly "value below ~90 % of the target").
 DISTANCE_TO_TARGET_FLOOR = 0.8
 
-#: Built-in JAPAN data: share (%) of each material's use by Japanese manufacturing sector.
+#: Derived from JAPAN data: share (%) of each material's use by German manufacturing sector.
 #: Source: original SCARCE_Japan.py. Sector names must exist in the "Value added" sheet of
-#: Indicators.xlsx. A sector may be listed twice (e.g. Antimony) and both entries count.
 #: Other countries supply this as a CSV instead (Settings.economic_importance_file).
-JAPAN_ECONOMIC_IMPORTANCE_SECTORS = {
+GERMANY_ECONOMIC_IMPORTANCE_SECTORS = {
     'Aluminium': [('Beverages, tobacco and feed', 11), ('Electrical machinery, equipment and supplies', 16), ('Transportation equipment', 43), ('Production machinery', 2)],
     'Antimony': [('Chemical and allied products', 40), ('Electronic parts, devices and electronic circuits', 32), ('Fabricated metal products', 14), ('Chemical and allied products', 10), ('Non-ferrous metals and products', 4)],
     'Bismuth': [('Chemical and allied products', 62), ('Iron and steel', 10), ('Non-ferrous metals and products', 28)],
@@ -406,9 +405,9 @@ def load_economic_importance(settings: Settings, sheets: dict[str, pd.DataFrame]
         table = pd.read_csv(_find_file(settings.economic_importance_file, d))
         shares = {m: list(zip(g['Industry'], g['Share'])) for m, g in table.groupby('Material', sort=False)}
     elif settings.country == 'Germany':
-        shares = JAPAN_ECONOMIC_IMPORTANCE_SECTORS
+        shares = GERMANY_ECONOMIC_IMPORTANCE_SECTORS
     elif settings.country == 'Japan':
-        shares = JAPAN_ECONOMIC_IMPORTANCE_SECTORS
+        shares = GERMANY_ECONOMIC_IMPORTANCE_SECTORS
     else:
         raise ValueError(f"Import mode for {settings.country} needs economic_importance_file "
                          "(columns Material, Industry, Share).")
