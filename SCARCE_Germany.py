@@ -44,7 +44,7 @@ REFINE_CODE = True                                                     # False =
                                                                         # True  = add refinements listed in scarce_core.Settings
 SHOW_PLOTS = True                                                       # show the criticality matrix in a window
 
-IMPORTS_FILE = 'Comtrade_all_2024.csv'                           # Germany's imports (UN Comtrade)
+IMPORTS_FILE = 'Comtrade_all_2020.csv'                           # Germany's imports (UN Comtrade)
 #VALUE_ADDED_FILE = 'Germany_value_added.csv'                    # Industry, Value added
 #ECONOMIC_IMPORTANCE_FILE = 'Germany_economic_importance.csv'    # Material, Industry, Share (using built-in file from Japan)
 # ------------------------------------------------------------------------------
